@@ -2,7 +2,7 @@ import utils
 import logging
 import os
 import cPickle
-MODEL_DIR = '../models/'
+MODEL_DIR = './models/'
 
 FOLDER_STRUCTURE='''
 model_versions
