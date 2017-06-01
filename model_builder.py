@@ -10,8 +10,8 @@ import theano
 from hred_vhred import train
 from model_manager import ModelManager
 
-MODEL_DIR = '../models/'
-CORPORA_DIR = '../data/corpora/'
+MODEL_DIR = './models/'
+CORPORA_DIR = './data/corpora/'
 
 class ModelBuilder(cmd.Cmd):
 
