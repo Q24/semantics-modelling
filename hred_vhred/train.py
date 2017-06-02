@@ -203,6 +203,8 @@ def train2(model_manager, state, args):
     rng = model.rng
 
     timings = {'step':step}
+    total_token_time = 0
+    num_tokens_processed = 0
 
     while (step < state['loop_iters'] and
                        (time.time() - start_time) / 60. < state['time_stop'] and
@@ -246,12 +248,20 @@ def train2(model_manager, state, args):
             # Knowing when the training procedure reaches the end is useful for diagnosing training problems
             # print 'END-OF-BATCH EXAMPLE!'
             is_end_of_batch = True
+        token_time = time.time()
 
         if state['use_nce']:
             y_neg = rng.choice(size=(10, max_length, x_data.shape[1]), a=model.idim, p=model.noise_probs).astype('int32')
             c, kl_divergence_cost, posterior_mean_variance = train_batch(x_data, x_data_reversed, y_neg, max_length, x_cost_mask, x_reset, ran_cost_utterance, ran_decoder_drop_mask)
         else:
             c, kl_divergence_cost, posterior_mean_variance = train_batch(x_data, x_data_reversed, max_length, x_cost_mask, x_reset, ran_cost_utterance, ran_decoder_drop_mask)
+
+
+        total_token_time += (time.time()-token_time)
+        num_tokens_processed +=(batch['x'].shape[1] * batch['max_length'])
+
+        print '%.3f words/s' % (num_tokens_processed/total_token_time)
+
 
         # Print batch statistics
         print 'cost_sum', c
@@ -485,9 +495,6 @@ def train2(model_manager, state, args):
 
 #--prototype vhred_test --save_every_valid_iteration
 def train(args, state=None, commands=None):
-
-
-
     if commands:
         def shall_train():
             return commands['train']
@@ -694,6 +701,9 @@ def train(args, state=None, commands=None):
     #for idx in xrange(10):
         #print theano.tensor.sum(model.W_emb[word_idx]).eval()
 
+    total_token_time = 0
+    num_tokens_processed = 0
+
     while (step < state['loop_iters'] and
             (time.time() - start_time)/60. < state['time_stop'] and
             patience >= 0):
@@ -776,6 +786,10 @@ def train(args, state=None, commands=None):
         else:
             c, kl_divergence_cost, posterior_mean_variance = train_batch(x_data, x_data_reversed, max_length, x_cost_mask, x_reset, ran_cost_utterance, ran_decoder_drop_mask)
 
+        total_token_time += token_time
+        num_tokens_processed +=(batch['x'].shape[1] * batch['max_length'])
+
+        print '%.3f words/s' % (num_tokens_processed/total_token_time)
 
         if commands:
             token_time = time.time()-token_time
