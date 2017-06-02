@@ -10,7 +10,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
     #with open('../models/test/model_versions/2017-06-01_09:51:00_inf_model.pkl', 'rb') as f:
-    with open('./models/test/model_versions/2017-06-01_10:30:02_inf_model.pkl', 'rb') as f:
+    with open('./models/test/model_versions/2017-06-02_09:56:01_inf_model.pkl', 'rb') as f:
         model = cPickle.load(f)
 
     test_dialogue = '<customer> hoi </u> </s>'
