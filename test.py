@@ -1,5 +1,6 @@
 import cPickle
 import logging
+import hred_vhred.dialog_encdec
 
 from data import encoding_tools
 
@@ -9,7 +10,7 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
     #with open('../models/test/model_versions/2017-06-01_09:51:00_inf_model.pkl', 'rb') as f:
-    with open('../models/test/model_versions/2017-06-01_10:30:02_inf_model.pkl', 'rb') as f:
+    with open('./models/test/model_versions/2017-06-01_10:30:02_inf_model.pkl', 'rb') as f:
         model = cPickle.load(f)
 
     test_dialogue = '<customer> hoi </u> </s>'
@@ -23,11 +24,10 @@ if __name__ == '__main__':
     print len(embeddings[1][0][0])
 
     #print model.encoding_hash
-    for x in xrange(10):
-        print encoding_tools.create_model_specific_encoding_hash(model)
+    print encoding_tools.create_model_specific_encoding_hash(model)
 
 
-    with open('../models/test/model_versions/copy.pkl', 'wb') as f:
+    with open('./models/test/model_versions/copy.pkl', 'wb') as f:
         cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
 
     print model.timings['encoding_hash']
