@@ -13,6 +13,7 @@ data
  binarized
  evaluation
  word_embeddings
+ nlp_models
 '''
 
 RELEVANT_FILES = [('state', 'state.txt', ''),
@@ -20,7 +21,8 @@ RELEVANT_FILES = [('state', 'state.txt', ''),
                   ('train', 'train.dialogues.pkl', 'data/binarized/'),
                     ('valid', 'valid.dialogues.pkl', 'data/binarized/'),
                   ('test', 'test.dialogues.pkl', 'data/binarized/'),
-                  ('word_embeddings', 'word2vec.bin', 'data/word_embeddings/')]
+                  ('word_embeddings', 'word2vec.bin', 'data/word_embeddings/'),
+                  ('frequencies', 'frequencies.pkl', 'data/nlp_models/')]
 
 class ModelManager():
 
