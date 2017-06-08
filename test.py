@@ -1,16 +1,25 @@
 import cPickle
 import logging
 import hred_vhred.dialog_encdec
+import model_manager
+from data import encoding_tools, word_embedding_tools
 
-from data import encoding_tools
 
 #-0.133256561537
 if __name__ == '__main__':
 
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
+
+    m = model_manager.ModelManager('vhred')
+    word_embedding_tools.load_pretrained_embeddings(m, './data/word_embeddings/cow-big.txt', False)
+
+    exit()
+
+
+
     #with open('../models/test/model_versions/2017-06-01_09:51:00_inf_model.pkl', 'rb') as f:
-    with open('./models/test/model_versions/2017-06-02_09:56:01_inf_model.pkl', 'rb') as f:
+    with open('./models/vhred/model_versions/2017-06-08_11:48:26_inf_model.pkl', 'rb') as f:
         model = cPickle.load(f)
 
     test_dialogue = '<customer> hoi </u> </s>'
@@ -27,7 +36,7 @@ if __name__ == '__main__':
     print encoding_tools.create_model_specific_encoding_hash(model)
 
 
-    with open('./models/test/model_versions/copy.pkl', 'wb') as f:
-        cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
+    #with open('./models/test/model_versions/copy.pkl', 'wb') as f:
+        #cPickle.dump(model, f, protocol=cPickle.HIGHEST_PROTOCOL)
 
     print model.timings['encoding_hash']

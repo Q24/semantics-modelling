@@ -891,3 +891,46 @@ def prototype_ubuntu_VHRED():
 
     return state
 
+
+
+def ubuntu_vhred():
+    state = prototype_state()
+
+
+    state['max_grad_steps'] = 80
+
+    state['valid_freq'] = 5000
+
+    state['prefix'] = "UbuntuModel_"
+    state['updater'] = 'adam'
+
+    state['bidirectional_utterance_encoder'] = False
+    state['deep_dialogue_input'] = True
+    state['deep_out'] = True
+
+    state['bs'] = 10
+
+    state['reset_utterance_decoder_at_end_of_utterance'] = True
+    state['reset_utterance_encoder_at_end_of_utterance'] = True
+    state['utterance_decoder_gating'] = 'LSTM'
+
+    state['lr'] = 0.0002
+
+    state['qdim_encoder'] = 500
+    state['qdim_decoder'] = 500
+    state['sdim'] = 1000
+    state['rankdim'] = 300
+
+    # Latent variable configuration
+    state['add_latent_gaussian_per_utterance'] = True
+    state['latent_gaussian_per_utterance_dim'] = 100
+    state['scale_latent_variable_variances'] = 0.1
+    state['condition_latent_variable_on_dialogue_encoder'] = True
+    state['train_latent_gaussians_with_kl_divergence_annealing'] = True
+    state['kl_divergence_annealing_rate'] = 1.0 / 75000.0
+    state['decoder_drop_previous_input_tokens'] = True
+    state['decoder_drop_previous_input_tokens_rate'] = 0.75
+
+    state['patience'] = 20
+
+    return state

@@ -24,6 +24,8 @@ RELEVANT_FILES = [('state', 'state.txt', ''),
                   ('word_embeddings', 'word2vec.bin', 'data/word_embeddings/'),
                   ('frequencies', 'frequencies.pkl', 'data/nlp_models/')]
 
+EXTERNAL_FOLDERS = [('pre_trained_word_embeddings', './data/word_embeddings/')]
+
 class ModelManager():
 
     folders = {}
@@ -56,6 +58,9 @@ class ModelManager():
 
             utils.create_folder_if_not_existing(new_dir)
             self.folders[folder_name] = new_dir+'/'
+
+        for folder_reference, folder_path in EXTERNAL_FOLDERS:
+            self.folders[folder_reference] = folder_path
 
 
     def index_important_files(self):

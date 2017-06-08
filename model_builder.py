@@ -1,14 +1,20 @@
-import logging
-import cmd
-import os
-import corpora_processing
 import argparse
-import shutil
 import cPickle
-import word_embedding_tools
-import theano
+import cmd
+import logging
+import os
+import shutil
+from tqdm import tqdm
+import requests
+
+import corpora_processing
+from data import word_embedding_tools
 from hred_vhred import train
 from model_manager import ModelManager
+
+DOWNLOADS = [('dutch word embeddings: COW (COrpora from the Web)', 'http://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz', 'cow-big.tar.gz','./data/word_embeddings/')]
+
+
 
 MODEL_DIR = './models/'
 CORPORA_DIR = './data/corpora/'
@@ -152,6 +158,41 @@ class ModelBuilder(cmd.Cmd):
 
         word_embedding_tools.train_embeddings(ModelManager(self.prompt[:-1]), feature_length)
 
+    def do_load_pretrained_word_embeddings(self, line):
+        '''
+        Will load the word embeddings from a pre-trained model that fit to the vocabulary
+        of the currently selected model. The resulting embeddings file will be stored
+        in the model's folder and can be selected with select_word_embeddings
+
+        If executed with: --fix_pretrained , pre-trained word embeddings will not
+        be tuned during training.
+        '''
+        if not self.has_model_selected():
+            print 'please select or create a model'
+            return False
+
+        fix_pretrained = False
+        if line != '':
+            if line == '--fix_pretrained':
+                fix_pretrained = True
+            else:
+                print 'Did not understand input: ', line
+                return False
+
+
+        m = ModelManager(self.prompt[:-1])
+
+        selection = self.select_in_dir(m.folders['pre_trained_word_embeddings'], type='files')
+
+        if selection:
+            file_path = m.folders['pre_trained_word_embeddings'] + selection
+        else:
+            print 'selection failed'
+            return False
+
+        word_embedding_tools.load_pretrained_embeddings(m, file_path, fix_pretrained)
+
+
     def do_select_word_embeddings(self, line):
         '''
         Will give an option over the available word embeddings.
@@ -215,6 +256,37 @@ class ModelBuilder(cmd.Cmd):
 
         with open(m.folders['model_versions']+selection, 'rb') as f:
             model = cPickle.load(f)
+
+    def do_download(self, input):
+        '''
+        Shows a selection of possible downloads.
+        After selection, downloads the corresponding file.
+        '''
+
+        for idx, (download_name, link, file_name, save_dir) in enumerate(DOWNLOADS):
+            print '(%i) %s'%(idx, download_name)
+
+        user_input = raw_input('select number:')
+        try:
+            selection = int(user_input)
+        except:
+            print 'invalid input:', user_input
+            return
+
+        download_name, link, file_name, save_dir = DOWNLOADS[selection]
+
+        logging.debug('Attempting to download %s'%link)
+
+        response = requests.get(link, stream=True)
+
+        with open(save_dir+file_name, "wb") as f:
+            pbar = tqdm(unit="B", total=int(response.headers['Content-Length']))
+            for chunk in response.iter_content(chunk_size=256):
+                if chunk:  # filter out keep-alive new chunks
+                    pbar.update(len(chunk))
+                    f.write(chunk)
+
+
 
     def has_model_selected(self):
         return self.prompt != self.default_prompt
