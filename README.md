@@ -1,29 +1,25 @@
-# README #
+# Origins #
 
-This README would normally document whatever steps are necessary to get your application up and running.
+This repository builds on the work on Serban (see the original repository https://github.com/julianser/hed-dlg-truncated), an End-To-End Dialogue System utilizing
+deep recurrent neural networks to model Natural Language Understanding (NLG), Dialogue Manager, and Natural Language Understanding (NLU) in one large model.
 
-### What is this repository for? ###
+### Features ###
 
-* Quick summary
-* Version
-* [Learn Markdown](https://bitbucket.org/tutorials/markdowndemo)
+The purpose of this contribution is to provide scripts that support and automatize the model-creation, its training, and the utilization of the model beyond the original purpose of
+generating answers to a given context.
 
-### How do I get set up? ###
+The features are:
 
-* Summary of set up
-* Configuration
-* Dependencies
-* Database configuration
-* How to run tests
-* Deployment instructions
+* A command line interface that allows to create models with a representative folder structure, hosting training data, configuration files, word embeddings, different training versions, and other model related data.
 
-### Contribution guidelines ###
+* Functionality to create and access a database of utterance and dialogue embeddings. The database is using the hdf5 standard (see h5py), a data format that is designed for flexible and efficient I/O and for high volume and complex data. **(not in the code yet)**
 
-* Writing tests
-* Code review
-* Other guidelines
+* An Approximate Nearest Neighbor (ANN) model that allows to search for similar conversations in a database of dialogue embeddings. **(not in the code yet)**
 
-### Who do I talk to? ###
+* A hybrid version of the Hierarchical Recurrent Encoder Decoder (HRED) architecture and a retrieval-based approach, the ANN model, that allows to answer questions using the database instead of generating an answer end-to-end. **(not in the code yet)**
 
-* Repo owner or admin
-* Other community or team contact
+### Setup ###
+
+TODO
+
+
