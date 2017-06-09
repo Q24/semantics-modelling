@@ -145,12 +145,17 @@ def load(model, filename, parameter_strings_to_ignore):
 
 
 
-def train2(model_manager, state, args):
+def train2(model_manager, state, model = None, random_seed = True):
 
     for k, v in state.iteritems():
         print k, '=', v
 
-    model = DialogEncoderDecoder(state)
+    if not model:
+        model = DialogEncoderDecoder(state)
+        step = 0
+    else:
+        step = model.timings['step']
+
 
     logger.debug("Compile trainer")
     if not state["use_nce"]:
@@ -198,9 +203,11 @@ def train2(model_manager, state, args):
 
     batch = None
 
-    step = 0
 
-    rng = model.rng
+    if random_seed:
+        rng = numpy.random.RandomState(seed=time.time())
+    else:
+        rng = model.rng
 
     timings = {'step':step}
     total_token_time = 0
@@ -212,6 +219,8 @@ def train2(model_manager, state, args):
 
         if 'save_after_first_iter' in state and step ==1:
             save3(model, timings, model_manager)
+
+        timings['step'] = step
 
         ### Sampling phase
         if step % 200 == 0:

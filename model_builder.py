@@ -29,11 +29,29 @@ class ModelBuilder(cmd.Cmd):
         '''
         Will show a list of possible models to load (if any exist).
         If a model name is initially provided, the model will be loaded instead.
+
+        if a model is selected, model versions will be shown to select from.
         '''
+
+        if self.has_model_selected():
+            m = ModelManager(self.prompt[:-1])
+            selection = self.select_in_dir(m.folders['model_versions'], type='files')
+
+            if not selection:
+                return False
+
+            for root, dirs, files in os.walk(m.folders['current_version']):
+                for f in files:
+                    logging.debug('removing %s from selection'%f)
+                    os.unlink(os.path.join(root, f))
+
+            logging.debug('copying %s to %s'%(selection, m.folders['current_version']))
+            shutil.copy(m.folders['model_versions']+selection, m.folders['current_version']+selection)
+
+            return False
 
         # list existing models
         if line == '':
-
             selection = self.select_in_dir(MODEL_DIR)
         else:
             selection = line
@@ -239,8 +257,7 @@ class ModelBuilder(cmd.Cmd):
 
     def do_continue(self, line):
         '''
-        Will present all models, saved previously during the training.
-        The training of the selected model will be continued
+        Will continue the training of the currently selected model
         '''
 
         if not self.has_model_selected():

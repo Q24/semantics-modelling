@@ -908,7 +908,7 @@ def ubuntu_vhred():
     state['deep_dialogue_input'] = True
     state['deep_out'] = True
 
-    state['bs'] = 10
+    state['bs'] = 80
 
     state['reset_utterance_decoder_at_end_of_utterance'] = True
     state['reset_utterance_encoder_at_end_of_utterance'] = True

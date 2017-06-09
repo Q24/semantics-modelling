@@ -1,4 +1,5 @@
 from hred_vhred import state
+import hred_vhred.dialog_encdec
 import utils
 import logging
 import os
@@ -146,6 +147,29 @@ class ModelManager():
             train = cPickle.load(f)
 
         return train
+
+    def load_currently_selected_model(self):
+        (root, dirs, files) = os.walk(self.folders['current_version']).next()
+
+        if len([file for file in files if file.endswith('.pkl')]) > 1:
+            logging.debug('Loading model failed because of too many files in folder %s'%self.folders['current_version'])
+            return None
+
+        if not files:
+            logging.debug('Loading model failed: no models to load in %s'%self.folders['current_version'])
+            return None
+
+        for file in files:
+            if not file.endswith('.pkl'):
+                continue
+
+            logging.debug('loading %s'%file)
+            with open(root+file, 'rb') as f:
+                model = cPickle.load(f)
+
+            return model
+
+
 
 if __name__ == '__main__':
     m = ModelManager('test')

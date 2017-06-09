@@ -12,7 +12,13 @@ if __name__ == '__main__':
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
 
     m = model_manager.ModelManager('vhred')
-    word_embedding_tools.load_pretrained_embeddings(m, './data/word_embeddings/cow-big.txt', False)
+    model = m.load_currently_selected_model()
+
+    print encoding_tools.create_model_specific_encoding_hash(model)
+    print model.timings['encoding_hash']
+
+    for k, v in model.timings.iteritems():
+        print k, v
 
     exit()
 

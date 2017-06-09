@@ -1,25 +1,33 @@
-import requests
+#!flask/bin/python
+from flask import Flask, jsonify
 import numpy as np
-'''
-Handles the calls from a web-server using the Web Server Gateway Interface (WSGI) protocol
-'''
+import model_manager
+from data import word_embedding_tools
+app = Flask(__name__)
 
-def application(env, start_response):
-    start_response('200 OK', [('Content-Type','text/html')])
-    for key, value in env.iteritems():
-        print key, value
+tasks = [
+    {
+        'id': 1,
+        'title': u'Buy groceries',
+        'description': u'Milk, Cheese, Pizza, Fruit, Tylenol',
+        'done': False
+    },
+    {
+        'id': 2,
+        'title': u'Learn Python',
+        'description': u'Need to find a good Python tutorial on the web',
+        'done': False
+    }
+]
 
-    arr = np.array([0.0,1.2,-3.1], dtype='float32')
-    print arr.tostring()
-    print np.fromstring(arr.tostring(), dtype='float32')
-    print 'FOUND: ', env['test']
-    return [arr.tostring()]
-
+@app.route('/<string:conv>', methods=['GET'])
+def get_task(conv):
+    print conv
+    arr = np.array([.1,.2,.23], dtype='float32')
+    return jsonify(arr.tolist())
 
 if __name__ == '__main__':
-    data = {"test1":"TRUE", "test2":"FALSE"}
-    r = requests.get("http://0.0.0.0:8080",data)
+    m = model_manager.ModelManager('test')
 
-    array = np.fromstring(r.content, dtype='float32')
-    print array
-    print
+
+    app.run(debug=True)
