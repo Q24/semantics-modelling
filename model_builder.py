@@ -263,16 +263,11 @@ class ModelBuilder(cmd.Cmd):
         if not self.has_model_selected():
             print 'please select or create a model'
             return False
+
         m = ModelManager(self.prompt[:-1])
-
-        selection = self.select_in_dir(m.folders['model_versions'], 'files')
-
-        if not selection:
-            print 'selection failed'
-            return False
-
-        with open(m.folders['model_versions']+selection, 'rb') as f:
-            model = cPickle.load(f)
+        state = m.load_current_state(add_hidden=True)
+        model = m.load_currently_selected_model()
+        train.train2(m, state, model)
 
     def do_download(self, input):
         '''

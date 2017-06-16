@@ -1,6 +1,6 @@
 # Origins #
 
-This repository builds on the work on Serban (see the original repository https://github.com/julianser/hed-dlg-truncated), an End-To-End Dialogue System utilizing
+This repository builds on the work of Serban (see the original repository https://github.com/julianser/hed-dlg-truncated), an End-To-End Dialogue System utilizing
 deep recurrent neural networks to model Natural Language Understanding (NLG), Dialogue Manager, and Natural Language Understanding (NLU) in one large model.
 
 ### Features ###

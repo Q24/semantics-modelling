@@ -205,7 +205,7 @@ def train2(model_manager, state, model = None, random_seed = True):
 
 
     if random_seed:
-        rng = numpy.random.RandomState(seed=time.time())
+        rng = numpy.random.RandomState()
     else:
         rng = model.rng
 
@@ -217,7 +217,7 @@ def train2(model_manager, state, model = None, random_seed = True):
                        (time.time() - start_time) / 60. < state['time_stop'] and
                    patience >= 0):
 
-        if 'save_after_first_iter' in state and step ==1:
+        if 'save_at_iter' in state and step == state['save_at_iter']:
             save3(model, timings, model_manager)
 
         timings['step'] = step
