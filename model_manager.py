@@ -15,6 +15,7 @@ data
  evaluation
  word_embeddings
  nlp_models
+ embeddings
 '''
 
 RELEVANT_FILES = [('state', 'state.txt', ''),
@@ -23,7 +24,9 @@ RELEVANT_FILES = [('state', 'state.txt', ''),
                     ('valid', 'valid.dialogues.pkl', 'data/binarized/'),
                   ('test', 'test.dialogues.pkl', 'data/binarized/'),
                   ('word_embeddings', 'word2vec.bin', 'data/word_embeddings/'),
-                  ('frequencies', 'frequencies.pkl', 'data/nlp_models/')]
+                  ('frequencies', 'frequencies.pkl', 'data/nlp_models/'),
+                  ('utterance_embeddings', 'utt.embs.bin', 'data/embeddings/'),
+                  ('dialogue_embeddings', 'dia.embs.bin', 'data/embeddings/')]
 
 EXTERNAL_FOLDERS = [('pre_trained_word_embeddings', './data/word_embeddings/')]
 
@@ -147,6 +150,21 @@ class ModelManager():
             train = cPickle.load(f)
 
         return train
+
+    def load_test_data(self):
+        with open(self.files['test'], 'rb') as f:
+            test = cPickle.load(f)
+
+        return test
+
+    def load_valid_data(self):
+        with open(self.files['valid'], 'rb') as f:
+            valid = cPickle.load(f)
+
+        return valid
+
+    def load_data(self):
+        return self.load_train_data(), self.load_valid_data(), self.load_test_data()
 
     def load_currently_selected_model(self):
         (root, dirs, files) = os.walk(self.folders['current_version']).next()
