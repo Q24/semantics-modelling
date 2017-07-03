@@ -1,7 +1,7 @@
 import os
 import sys
 import datetime
-from datetime import time
+from time import time
 
 def create_folder_if_not_existing(directory):
     if not os.path.exists(directory):
@@ -27,8 +27,8 @@ def print_progress_bar(current_progress, total_progress, done = False, additiona
     if additional_text:
         sys.stdout.write(' ' +additional_text)
 
-    if start_time:
-        elapsed_time = time.time()-start_time
+    if start_time is not None:
+        elapsed_time = time()-start_time
         remaining_time = elapsed_time*((1.-percentage)/percentage)
 
         remaining_time = str(datetime.timedelta(seconds=remaining_time)).split('.')[0]
@@ -37,3 +37,23 @@ def print_progress_bar(current_progress, total_progress, done = False, additiona
 
     if current_progress == total_progress:
         sys.stdout.flush()
+
+
+
+def batch_iterator(single_yield_iterator, batch_size, apply_on_element = None):
+
+    batch = []
+
+    for element in single_yield_iterator:
+
+        if apply_on_element:
+            element = apply_on_element(element)
+
+        batch.append(element)
+
+        if len(batch) == batch_size:
+            yield batch
+            batch = []
+
+    if len(batch) > 0:
+        yield batch
