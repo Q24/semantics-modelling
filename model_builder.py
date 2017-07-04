@@ -6,12 +6,13 @@ import os
 import shutil
 from tqdm import tqdm
 import requests
-
+import ann.lsh_forest as lsh_forest
 import corpora_processing
 from data import word_embedding_tools
 from hred_vhred import train
 from model_manager import ModelManager
-
+from data.data_access import build_database_from_scratch
+from data.encoding_tools import save_embeddings_to_file
 DOWNLOADS = [('dutch word embeddings: COW (COrpora from the Web)', 'http://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz', 'cow-big.tar.gz','./data/word_embeddings/')]
 
 
@@ -268,6 +269,57 @@ class ModelBuilder(cmd.Cmd):
         state = m.load_current_state(add_hidden=True)
         model = m.load_currently_selected_model()
         train.train2(m, state, model)
+
+    def do_build_database(self, input):
+        '''
+
+        Will build a database from scratch storing binarized dialogues for quick access,
+        as well as an indexing structures.
+        '''
+
+        if not self.has_model_selected():
+            print 'please select or create a model'
+            return False
+
+        m = ModelManager(self.prompt[:-1])
+        build_database_from_scratch(m)
+
+    def do_encode_corpus(self, input):
+        '''
+        Will encode the currently selected corpus and save the resulting embeddings to disk
+        '''
+        if not self.has_model_selected():
+            print 'please select or create a model'
+            return False
+
+        m = ModelManager(self.prompt[:-1])
+        save_embeddings_to_file(m)
+
+    def do_build_lshf_model(self, input):
+        '''
+        Will train a LSH-Forest on a part of the corpus
+
+        You can specify the percentage of the corpus to be used by
+
+        build_lshf_model <percentage>
+
+        build_lshf_model 0.1
+
+        would use 10% of the corpus to train the model.
+        '''
+        if not self.has_model_selected():
+            print 'please select or create a model'
+            return False
+
+        m = ModelManager(self.prompt[:-1])
+
+        if input == '':
+            percentage = 1.0
+        else:
+            percentage = float(input)
+
+        lsh_forest.train_lsh_forest(m, corpus_percentage=percentage)
+        lsh_forest.save_linked_utterance_embeddings(m)
 
     def do_download(self, input):
         '''
