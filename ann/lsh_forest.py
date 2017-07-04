@@ -141,7 +141,7 @@ def train_lsh_forest(model_manager, corpus_percentage = 0.30,  seed = 10):
     rand.shuffle(train_ids)
 
     # divide the data to ensure that everything fits into memory
-    train_ids = train_ids[:(len(train_ids)*corpus_percentage)]
+    train_ids = train_ids[:int(len(train_ids)*corpus_percentage)]
     logging.debug('will train LSH-Fores using %i conversations (%.2f%% of the corpus)'%(len(train_ids), 100.*len(train_ids)/len(database[TRAIN_IDS_SET_NAME])))
 
 
