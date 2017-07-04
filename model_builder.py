@@ -12,7 +12,7 @@ from data import word_embedding_tools
 from hred_vhred import train
 from model_manager import ModelManager
 from data.data_access import build_database_from_scratch
-from data.encoding_tools import save_embeddings_to_file
+from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency
 DOWNLOADS = [('dutch word embeddings: COW (COrpora from the Web)', 'http://www.clips.uantwerpen.be/dutchembeddings/cow-big.tar.gz', 'cow-big.tar.gz','./data/word_embeddings/')]
 
 
@@ -294,6 +294,7 @@ class ModelBuilder(cmd.Cmd):
 
         m = ModelManager(self.prompt[:-1])
         save_embeddings_to_file(m)
+        check_embeddings_consistency(m)
 
     def do_build_lshf_model(self, input):
         '''
