@@ -133,6 +133,7 @@ def train_lsh_forest(model_manager, corpus_percentage = 0.30,  seed = 10):
     # get dialogue ids that can be used to train our ann model
     database = get_database(model_manager)
     train_ids = database[TRAIN_IDS_SET_NAME][:]
+    logging.debug('train set has %i conversations'% len(train_ids))
 
     # shuffle it to ensure that the training data is as versatile as possible
     logging.debug('shuffling training data with seed %i'%seed)
