@@ -25,8 +25,8 @@ RELEVANT_FILES = [('state', 'state.txt', ''),
                   ('test', 'test.dialogues.pkl', 'data/binarized/'),
                   ('word_embeddings', 'word2vec.bin', 'data/word_embeddings/'),
                   ('frequencies', 'frequencies.pkl', 'data/nlp_models/'),
-                  ('utterance_embeddings', 'utt.embs.bin', 'data/embeddings/'),
-                  ('dialogue_embeddings', 'dia.embs.bin', 'data/embeddings/')]
+                  ('utterance_embeddings', 'utterance.embeddings.bin', 'data/embeddings/'),
+                  ('dialogue_embeddings', 'dialogue.embeddings.bin', 'data/embeddings/')]
 
 EXTERNAL_FOLDERS = [('pre_trained_word_embeddings', './data/word_embeddings/')]
 
@@ -66,6 +66,9 @@ class ModelManager():
         for folder_reference, folder_path in EXTERNAL_FOLDERS:
             self.folders[folder_reference] = folder_path
 
+        for folder_name, path in self.folders.iteritems():
+            logging.debug('model manager linked folder %s -> %s'%(folder_name, path))
+
 
     def index_important_files(self):
         DIR = MODEL_DIR+self.model_name+'/'
@@ -78,6 +81,9 @@ class ModelManager():
                 if file_sub_string in filename:
                     self.files[descriptor] = target_dir+filename
                     break
+
+        for file_name, path in self.files.iteritems():
+            logging.debug('model manager linked file %s -> %s'%(file_name, path))
 
 
 
