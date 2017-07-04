@@ -4,6 +4,7 @@ import numpy as np
 from logging import debug
 from time import time
 from utils import print_progress_bar
+from data_file import FileArray
 
 DICTIONARY_NAME = 'dictionary'
 BINARIZED_SET_NAME = 'dialogues_binarized'
@@ -107,7 +108,57 @@ def build_database_from_scratch(model_manager):
 
     logging.debug('ids done')
 
+def load_embeddings(model_manager, labels):
+    database = get_database(model_manager)
+    coords = database[EMBEDDINGS_COORDINATES_SET_NAME]
 
+    utt_embs = FileArray(model_manager.files['utterance_embeddings'])
+    utt_embs.open()
+
+    embeddings = {}
+
+    for progress, (d_idx, turn) in enumerate(labels):
+
+        global_idx, conv_lengh = coords[d_idx]
+
+        if d_idx not in embeddings:
+            embeddings[d_idx] = []
+
+        embeddings[d_idx].append((turn, utt_embs.read(global_idx+turn)))
+
+        if progress % 100 == 0:
+            print_progress_bar(progress, len(labels), additional_text='%i embeddings loaded'%progress)
+
+    for k, v in embeddings.iteritems():
+        embeddings_turn_sorted = [pair[1] for pair in sorted(v, key=lambda p: p[0])]
+        embeddings[k] = embeddings_turn_sorted
+
+    utt_embs.close()
+    return embeddings
+
+
+
+def get_label_translator(model_manager, as_text = True):
+
+    database = get_database(model_manager)
+    binarized_base = database[BINARIZED_SET_NAME]
+
+    if as_text:
+        vocab = {word_id: word for word, word_id, _, _ in model_manager.load_vocabulary()}
+
+    def mapper(label):
+        indices = [1] + list(binarized_base[label[0]]) + [1]
+
+        one_indices = [idx for idx, v in enumerate(indices) if v == 1]
+
+        indices = indices[one_indices[label[1]]+1:one_indices[label[1]+1]]
+
+        if as_text:
+            return ' '.join(vocab[word_id] for word_id in indices)
+
+        return indices
+
+    return mapper
 
 if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
