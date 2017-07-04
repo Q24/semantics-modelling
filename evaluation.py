@@ -3,7 +3,8 @@ from data.data_file import FileArray
 from random import Random
 from logging import debug
 from hred_vhred import search
-
+from time import time
+from utils import print_progress_bar
 def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     rand = Random(seed)
 
@@ -25,9 +26,9 @@ def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     label_to_text = data_access.get_label_translator(model_manager)
 
     #context-textual response-textual, response-emb context-emb, answer-emb
-
+    progress = 0
     for d_idx, (global_idx, conv_length) in zip(test_ids, coords):
-
+        progress += 1
         context = label_to_text((d_idx, 0))
 
         relevant_utt_embs = utt_embs.read_chunk(global_idx, conv_length)
@@ -42,7 +43,8 @@ def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
             instance['answer'] = label_to_text((d_idx, conv_turn+1))
             instance['answer_utterance_emb'] = relevant_utt_embs[idx+1]
             instance['answer_context_emb'] = relevant_dia_embs[idx+1]
-
+            instance['progress'] = progress
+            instance['conversations'] = len(test_ids)
             yield instance
 
             context = context + ' </s> ' + instance['question']
@@ -121,6 +123,7 @@ def evaluate(model_manager):
 
     evaluator = get_response_evaluator(model_manager.load_currently_selected_model())
     rankings = []
+    start_time = time()
     for instance in evaluation_sample_iterator(model_manager):
 
         random_responses = [rand_iter.next()[0] for x in xrange(9)]
@@ -138,4 +141,5 @@ def evaluate(model_manager):
 
         rATk = calculate_recall_at_k(rankings, 10)
         result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
-        print result_str
+
+        print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
