@@ -36,7 +36,8 @@ if __name__ == '__main__':
 
 
     #chat_with_model(m)
-    evaluation.evaluate(m)
+    #evaluation.evaluate(m)
+    evaluation.evaluate_lshf(m)
 
 
 

@@ -5,6 +5,10 @@ from logging import debug
 from hred_vhred import search
 from time import time
 from utils import print_progress_bar
+from hred_vhred import search
+from ann import lsh_forest
+from ann.candidate_selection import *
+
 def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     rand = Random(seed)
 
@@ -45,9 +49,10 @@ def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
             instance['answer_context_emb'] = relevant_dia_embs[idx+1]
             instance['progress'] = progress
             instance['conversations'] = len(test_ids)
+
             yield instance
 
-            context = context + ' </s> ' + instance['question']
+            context = context + ' </s> ' + instance['answer']
 
     utt_embs.close()
     dia_embs.close()
@@ -71,12 +76,34 @@ def random_response_generator(model_manager, seed = 10):
 
     while 1:
 
-        idx = rand.randint(0, len(test_ids-1))
+        idx = rand.randint(0, len(test_ids)-1)
         d_idx = test_ids[idx]
         global_idx, conv_length = coords[idx]
 
         conv_turn = rand.randint(0, conv_length-1)
         yield label_to_text((d_idx, conv_turn)), utt_embs.read(global_idx+conv_turn)
+
+def get_resonse_lshf_evaluator(model_manager):
+    ann = lsh_forest.load_lshf(model_manager)
+    utt_embs = lsh_forest.load_utterance_embeddings(model_manager)
+
+    def evaluate(instance):
+        distances, labels, embeddings = ann.kneighbors(instance['context_emb'], 10)
+        labels = [(label[0], label[1] + 1) for label in labels]
+        search_context = {'distances': distances,
+                          'labels': labels,
+                          'candidate_dialogue_embeddings': embeddings,
+                          'utterance_embeddings': utt_embs,
+                          'original_utterance_embedding': instance['question_utterance_emb'],
+                          'original_dialogue_embedding': instance['context_emb']}
+        #scored = answer_relevance(search_context)
+        scored = context_relevance(search_context)
+
+        scored = sorted(scored, key=lambda tpl: tpl[0])
+        label = scored[0][1]
+        return utt_embs[label[0]][label[1]], label
+
+    return evaluate
 
 def get_response_evaluator(encoder):
 
@@ -94,6 +121,7 @@ def get_response_evaluator(encoder):
 
 
         evaluator.set_response(response)
+
 
         samples, costs = evaluator.sample([context], n_samples=1, n_turns=1, ignore_unk=False)
 
@@ -129,6 +157,8 @@ def evaluate(model_manager):
         random_responses = [rand_iter.next()[0] for x in xrange(9)]
 
         context = instance['context']
+
+
         candidates = [(evaluator(instance['answer'], context), True)]
         for random_resp in random_responses:
             cost = evaluator(random_resp, context)
@@ -143,3 +173,47 @@ def evaluate(model_manager):
         result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
 
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
+
+
+
+
+def evaluate_lshf(model_manager):
+    rand_iter = random_response_generator(model_manager)
+
+    evaluator = get_resonse_lshf_evaluator(model_manager)
+
+    rankings = []
+    start_time = time()
+
+    translator = data_access.get_label_translator(model_manager)
+    for instance in evaluation_sample_iterator(model_manager):
+
+        random_responses = [rand_iter.next()[1] for x in xrange(9)]
+
+        predicted_utt_emb, label = evaluator(instance)
+        '''
+        print instance['context']
+        print
+        print instance['answer']
+        print translator(label)
+        print '*'*10
+        '''
+        candidates = [(cosine_similarity(instance['answer_utterance_emb'], predicted_utt_emb), True)]
+        for random_utt_emb in random_responses:
+            cost = cosine_similarity(random_utt_emb, predicted_utt_emb)
+            candidates.append((cost, False))
+
+        candidates = sorted(candidates, key=lambda pair: pair[0])
+
+        rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
+        rankings.append(rank)
+
+        rATk = calculate_recall_at_k(rankings, 10)
+        result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
+
+        print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
+
+
+
+#Ubuntu vhred
+#R@1 18.098% | R@2 31.862% | R@3 43.254% | R@4 54.293% | R@5 63.805% | R@6 72.826% | R@7 80.594% | R@8 88.035% | R@9 94.167% remaining time: 14:56:29Traceback (most recent call last):
