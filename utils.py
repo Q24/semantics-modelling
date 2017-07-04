@@ -10,7 +10,7 @@ def create_folder_if_not_existing(directory):
 
 
 
-def print_progress_bar(current_progress, total_progress, done = False, additional_text = '', tokens=50, start_time = None):
+def print_progress_bar(current_progress, total_progress, done = False, additional_text = '', tokens=25, start_time = None):
     sys.stdout.write('\r')
     if done:
         sys.stdout.write('[' + str('#' * tokens) + ('_' * 0) + ']' + '100.00% ' + additional_text + os.linesep)
