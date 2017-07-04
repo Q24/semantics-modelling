@@ -8,12 +8,39 @@ import numpy
 from model_manager import ModelManager
 from data.data_access import build_database_from_scratch, get_label_translator
 from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency, encode
+import evaluation
 #-0.133256561537
+
+def chat_with_model(model_manager):
+    from hred_vhred import search
+    encoder = model_manager.load_currently_selected_model()
+    sampler = search.BeamSampler(encoder)
+    print encoder.state['reset_utterance_decoder_at_end_of_utterance']
+    while 1:
+
+        input = raw_input('context :')
+
+        input += ' __eou__ </s>'
+        samples, costs = sampler.sample([input.split()], n_samples=5, n_turns=1)
+        for idx, sample in enumerate(samples[0]):
+            print str(costs[0][idx])+ ': ' + sample
+
 if __name__ == '__main__':
     #58.0168834256
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
 
+
+
+    m = ModelManager('ubuntu_vhred_vanilla')
+
+
+    #chat_with_model(m)
+    evaluation.evaluate(m)
+
+
+
+    exit()
 
     from ann import lsh_forest
     from ann.candidate_selection import *
