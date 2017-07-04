@@ -146,6 +146,7 @@ def train_lsh_forest(model_manager, corpus_percentage = 0.30,  seed = 10):
 
 
     # collect coords of embeddings related to our training indices
+    logging.debug('collecting embedding coordinates')
     coord_set = database[EMBEDDINGS_COORDINATES_SET_NAME]
     coords = [(coord_set[d_idx], d_idx) for d_idx in train_ids]
 
