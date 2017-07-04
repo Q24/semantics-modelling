@@ -5,15 +5,54 @@ import model_manager
 from data import encoding_tools, word_embedding_tools
 import dill
 import numpy
+from model_manager import ModelManager
+from data.data_access import build_database_from_scratch, get_label_translator
+from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency, encode
 #-0.133256561537
 if __name__ == '__main__':
     #58.0168834256
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
 
-    from model_manager import ModelManager
-    from data.data_access import build_database_from_scratch
-    from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency
+
+    from ann import lsh_forest
+    from ann.candidate_selection import *
+
+    m = ModelManager('ubuntu_vhred_vanilla')
+
+    #from ann.lsh_forest import save_linked_utterance_embeddings
+    #save_linked_utterance_embeddings(m)
+
+    #lsh_forest.train_lsh_forest(m, corpus_percentage=0.05)
+    ann = lsh_forest.load_lshf(m)
+    utt_embs = lsh_forest.load_utterance_embeddings(m)
+    encoder = m.load_currently_selected_model()
+
+    embs = encode('how do i update all packages ? __eou__', encoder)
+
+    d_emb = embs[0][0][0]
+
+    distances, labels, embeddings = ann.kneighbors(d_emb, 10)
+
+    translator = get_label_translator(m, as_text=True)
+
+    labels = [(label[0], label[1]+1) for label in labels]
+
+    search_context = {'distances':distances,
+                      'labels':labels,
+                      'candidate_dialogue_embeddings':embeddings,
+                      'utterance_embeddings':utt_embs,
+                      'original_utterance_embedding':embs[1][0][0],
+                      'original_dialogue_embedding':embs[0][0][0]}
+    scored = answer_relevance(search_context)
+    scored = sorted(scored, key=lambda tpl: tpl[0])
+    for score, label in scored:
+        print score, translator(label)
+        print
+
+    exit()
+
+
     m = ModelManager('ubuntu_vhred_vanilla')
 
     #check_embeddings_consistency(m)
