@@ -98,8 +98,8 @@ def get_resonse_lshf_evaluator(model_manager):
                           'original_utterance_embedding': instance['question_utterance_emb'],
                           'original_dialogue_embedding': instance['context_emb']}
         #scored = answer_relevance(search_context)
-        scored = context_relevance(search_context)
-        #scored = context_and_answer_relevance(search_context)
+        #scored = context_relevance(search_context)
+        scored = context_and_answer_relevance(search_context)
 
         scored = sorted(scored, key=lambda tpl: tpl[0])
         return scored, utt_embs
@@ -250,5 +250,5 @@ def evaluate_lshf(model_manager):
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
 
 
-#CAR
+#CAR 5%
 #5.04% R@1 26.522% | R@2 41.583% | R@3 52.072% | R@4 60.903% | R@5 69.620% | R@6 76.993% | R@7 83.510% | R@8 89.854% | R@9 95.456% remaining time: 1:30:22Traceback (most recent call last):
