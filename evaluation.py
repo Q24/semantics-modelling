@@ -8,6 +8,7 @@ from utils import print_progress_bar
 from hred_vhred import search
 from ann import lsh_forest
 from ann.candidate_selection import *
+from data.encoding_tools import encode
 
 def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     rand = Random(seed)
@@ -88,7 +89,7 @@ def get_resonse_lshf_evaluator(model_manager):
     utt_embs = lsh_forest.load_utterance_embeddings(model_manager)
 
     def evaluate(instance):
-        distances, labels, embeddings = ann.kneighbors(instance['context_emb'], 10)
+        distances, labels, embeddings = ann.kneighbors(instance['context_emb'], 120)
         labels = [(label[0], label[1] + 1) for label in labels]
         search_context = {'distances': distances,
                           'labels': labels,
@@ -98,10 +99,10 @@ def get_resonse_lshf_evaluator(model_manager):
                           'original_dialogue_embedding': instance['context_emb']}
         #scored = answer_relevance(search_context)
         scored = context_relevance(search_context)
+        #scored = context_and_answer_relevance(search_context)
 
         scored = sorted(scored, key=lambda tpl: tpl[0])
-        label = scored[0][1]
-        return utt_embs[label[0]][label[1]], label
+        return scored, utt_embs
 
     return evaluate
 
@@ -148,6 +149,9 @@ def calculate_recall_at_k(rankings, num_candidates):
 def evaluate(model_manager):
 
     rand_iter = random_response_generator(model_manager)
+    #    encoder = model_manager.load_currently_selected_model()
+
+    translator = data_access.get_label_translator(model_manager)
 
     evaluator = get_response_evaluator(model_manager.load_currently_selected_model())
     rankings = []
@@ -157,9 +161,19 @@ def evaluate(model_manager):
         random_responses = [rand_iter.next()[0] for x in xrange(9)]
 
         context = instance['context']
-
-
         candidates = [(evaluator(instance['answer'], context), True)]
+
+        '''
+
+        test = encode(context, encoder)
+        test2 = encode(context + ' </s> ' + instance['answer'], encoder)
+
+
+        print 'context emb', sum(test[0][0][0]), sum(instance['context_emb'])
+        print 'question emb', sum(test[1][0][0]), sum(instance['question_utterance_emb'])
+        print 'answer emb', sum(test2[1][-1][0]), sum(instance['answer_utterance_emb'])
+        print 'answer context emb', sum(test2[0][-1][0]), sum(instance['answer_context_emb'])
+        '''
         for random_resp in random_responses:
             cost = evaluator(random_resp, context)
             candidates.append((cost, False))
@@ -188,9 +202,20 @@ def evaluate_lshf(model_manager):
     translator = data_access.get_label_translator(model_manager)
     for instance in evaluation_sample_iterator(model_manager):
 
-        random_responses = [rand_iter.next()[1] for x in xrange(9)]
+        random_responses = [rand_iter.next() for x in xrange(9)]
 
-        predicted_utt_emb, label = evaluator(instance)
+
+        candidates, utt_embs_set = evaluator(instance)
+        '''
+        print instance['context'][-160:]
+        print
+        for score, label in candidates[:10]:
+            utt_emb_candidate = utt_embs_set[label[0]][label[1]]
+            print score, cosine_similarity(utt_emb_candidate, instance['answer_utterance_emb']), translator(label)[0:100]
+        '''
+        label = candidates[0][1]
+        predicted_utt_emb = utt_embs_set[label[0]][label[1]]
+
         '''
         print instance['context']
         print
@@ -199,13 +224,24 @@ def evaluate_lshf(model_manager):
         print '*'*10
         '''
         candidates = [(cosine_similarity(instance['answer_utterance_emb'], predicted_utt_emb), True)]
-        for random_utt_emb in random_responses:
+
+        '''
+        print
+        print candidates[0][0], instance['answer'][0:100]
+        print
+        '''
+
+        for rand_answer, random_utt_emb in random_responses:
             cost = cosine_similarity(random_utt_emb, predicted_utt_emb)
+            #print cost, rand_answer
             candidates.append((cost, False))
+
 
         candidates = sorted(candidates, key=lambda pair: pair[0])
 
         rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
+        #print rank
+        #print '*'*50
         rankings.append(rank)
 
         rATk = calculate_recall_at_k(rankings, 10)
@@ -214,6 +250,5 @@ def evaluate_lshf(model_manager):
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
 
 
-
-#Ubuntu vhred
-#R@1 18.098% | R@2 31.862% | R@3 43.254% | R@4 54.293% | R@5 63.805% | R@6 72.826% | R@7 80.594% | R@8 88.035% | R@9 94.167% remaining time: 14:56:29Traceback (most recent call last):
+#CAR
+#5.04% R@1 26.522% | R@2 41.583% | R@3 52.072% | R@4 60.903% | R@5 69.620% | R@6 76.993% | R@7 83.510% | R@8 89.854% | R@9 95.456% remaining time: 1:30:22Traceback (most recent call last):
