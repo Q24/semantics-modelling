@@ -9,7 +9,9 @@ from hred_vhred import search
 from ann import lsh_forest
 from ann.candidate_selection import *
 from data.encoding_tools import encode
-
+from hred_vhred.search import BeamSampler
+from gc import collect
+import numpy as np
 def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     rand = Random(seed)
 
@@ -84,7 +86,7 @@ def random_response_generator(model_manager, seed = 10):
         conv_turn = rand.randint(0, conv_length-1)
         yield label_to_text((d_idx, conv_turn)), utt_embs.read(global_idx+conv_turn)
 
-def get_resonse_lshf_evaluator(model_manager):
+def get_resonse_lshf_evaluator(model_manager, selection_method):
     ann = lsh_forest.load_lshf(model_manager)
     utt_embs = lsh_forest.load_utterance_embeddings(model_manager)
 
@@ -97,14 +99,41 @@ def get_resonse_lshf_evaluator(model_manager):
                           'utterance_embeddings': utt_embs,
                           'original_utterance_embedding': instance['question_utterance_emb'],
                           'original_dialogue_embedding': instance['context_emb']}
+        scored = selection_method(search_context)
         #scored = answer_relevance(search_context)
         #scored = context_relevance(search_context)
-        scored = context_and_answer_relevance(search_context)
+        #scored = context_and_answer_relevance(search_context)
 
         scored = sorted(scored, key=lambda tpl: tpl[0])
         return scored, utt_embs
 
     return evaluate
+def get_response_generator(encoder, return_embedding = True):
+
+    sampler = BeamSampler(encoder)
+
+    def answer_to(context):
+        if isinstance(context, basestring):
+            context = context.strip().split()
+            if context[0] != '</s>':
+                context = [encoder.end_sym_utterance] + context
+
+            if context[-1] != '</s>':
+                context = context +[encoder.end_sym_utterance]
+
+        samples, costs = sampler.sample([context], n_samples=5, n_turns=1, ignore_unk=False)
+
+        answer = samples[0][0]
+        cost = costs[0][0]
+
+        if return_embedding:
+            embs = encode(answer, encoder)
+            utt_emb = embs[1][-1][-1]
+            return cost, answer, utt_emb
+
+        return cost, answer
+
+    return answer_to
 
 def get_response_evaluator(encoder):
 
@@ -145,6 +174,41 @@ def calculate_recall_at_k(rankings, num_candidates):
         measurements[k] /= float(len(rankings))
 
     return measurements
+def evaluate_generative(model_manager):
+    rand_iter = random_response_generator(model_manager)
+    encoder = model_manager.load_currently_selected_model()
+
+    answer_model = get_response_generator(encoder)
+
+    #translator = data_access.get_label_translator(model_manager)
+
+    #evaluator = get_response_evaluator(model_manager.load_currently_selected_model())
+    rankings = []
+    start_time = time()
+    for instance in evaluation_sample_iterator(model_manager):
+
+        random_responses = [rand_iter.next() for x in xrange(9)]
+
+        context = instance['context']
+
+        cost, answer, pred_utt_emb = answer_model(context)
+
+        candidates = [(cosine(pred_utt_emb, instance['answer_utterance_emb']), True)]
+        for random_resp, rand_utt_emb in random_responses:
+            cost = cosine(pred_utt_emb, rand_utt_emb)
+            candidates.append((cost, False))
+
+        candidates = sorted(candidates, key=lambda pair: pair[0])
+
+        rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
+        rankings.append(rank)
+
+        rATk = calculate_recall_at_k(rankings, 10)
+        result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
+
+        print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str,
+                           start_time=start_time)
+
 
 def evaluate(model_manager):
 
@@ -156,8 +220,23 @@ def evaluate(model_manager):
     evaluator = get_response_evaluator(model_manager.load_currently_selected_model())
     rankings = []
     start_time = time()
+    progress = 0
+
+    result_arr = FileArray('./results/decoder_results_%s.bin'%model_manager.model_name, shape=(20000, 1), dtype='i4')
+    result_arr.open()
+
+
     for instance in evaluation_sample_iterator(model_manager):
 
+
+        prev_result = result_arr.read(progress)
+
+        if prev_result >= 1:
+            progress += 1
+            rankings.append(prev_result[0]-1)
+            continue
+
+        progress += 1
         random_responses = [rand_iter.next()[0] for x in xrange(9)]
 
         context = instance['context']
@@ -183,24 +262,43 @@ def evaluate(model_manager):
         rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
         rankings.append(rank)
 
+
+        result_arr.write(progress-1, np.array([rank+1], dtype='i4'))
+
         rATk = calculate_recall_at_k(rankings, 10)
         result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
 
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
 
+        if progress % 300 == 0:
+            print 'gc collect'
+            collect()
 
+    result_arr.close()
 
-
-def evaluate_lshf(model_manager):
+def evaluate_lshf(model_manager, selection_method):
     rand_iter = random_response_generator(model_manager)
 
-    evaluator = get_resonse_lshf_evaluator(model_manager)
+    evaluator = get_resonse_lshf_evaluator(model_manager, selection_method)
 
     rankings = []
     start_time = time()
 
-    translator = data_access.get_label_translator(model_manager)
+    #translator = data_access.get_label_translator(model_manager)
+    progress = 0
+
+    result_arr = FileArray('./results/%s_%s.bin'%(selection_method.__name__,model_manager.model_name), shape=(20000, 1), dtype='i4')
+    result_arr.open()
+
     for instance in evaluation_sample_iterator(model_manager):
+        prev_result = result_arr.read(progress)
+
+        if prev_result >= 1:
+            progress += 1
+            rankings.append(prev_result[0]-1)
+            continue
+
+        progress += 1
 
         random_responses = [rand_iter.next() for x in xrange(9)]
 
@@ -240,6 +338,7 @@ def evaluate_lshf(model_manager):
         candidates = sorted(candidates, key=lambda pair: pair[0])
 
         rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
+        result_arr.write(progress-1, np.array([rank+1], dtype='i4'))
         #print rank
         #print '*'*50
         rankings.append(rank)
@@ -249,6 +348,6 @@ def evaluate_lshf(model_manager):
 
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
 
-
+    result_arr.close()
 #CAR 5%
 #5.04% R@1 26.522% | R@2 41.583% | R@3 52.072% | R@4 60.903% | R@5 69.620% | R@6 76.993% | R@7 83.510% | R@8 89.854% | R@9 95.456% remaining time: 1:30:22Traceback (most recent call last):

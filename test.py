@@ -6,8 +6,10 @@ from data import encoding_tools, word_embedding_tools
 import dill
 import numpy
 from model_manager import ModelManager
+from data.data_file import FileArray
 from data.data_access import build_database_from_scratch, get_label_translator
 from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency, encode
+from ann.candidate_selection import *
 import evaluation
 #-0.133256561537
 
@@ -25,6 +27,14 @@ def chat_with_model(model_manager):
         for idx, sample in enumerate(samples[0]):
             print str(costs[0][idx])+ ': ' + sample
 
+def convert_model(m):
+    encoder = m.load_currently_selected_model()
+    encoder.state['dictionary'] = m.folders['binarized']+'dict.pkl'
+    with open(m.folders['model_versions']+'2016-12-23_20:15:49_40.897_model.pkl', 'wb') as f:
+        dill.dump(encoder, f, protocol=dill.HIGHEST_PROTOCOL)
+
+    m.save_state(encoder.state)
+
 if __name__ == '__main__':
     #58.0168834256
     logging.basicConfig(level=logging.DEBUG,
@@ -33,13 +43,25 @@ if __name__ == '__main__':
 
 
     m = ModelManager('ubuntu_vhred_vanilla')
+    '''
+    result_arr = FileArray('./results/context_and_answer_relevance_ubuntu_vhred_vanilla.bin', dtype='i4')
+    result_arr.open()
+    x = 0
+    while 1:
 
+        r = result_arr.read(x)[0]
+        x += 1
+        print r
+        if r == 0:
+            break
+    result_arr.close()
+    #'''
+    #convert_model(m)
 
     #chat_with_model(m)
-    #evaluation.evaluate(m)
-    evaluation.evaluate_lshf(m)
-
-
+    #evaluation.evaluate_generative(m)
+    evaluation.evaluate(m)
+    evaluation.evaluate_lshf(m, context_and_answer_relevance)
 
     exit()
 
