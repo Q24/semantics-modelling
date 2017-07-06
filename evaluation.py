@@ -12,6 +12,8 @@ from data.encoding_tools import encode
 from hred_vhred.search import BeamSampler
 from gc import collect
 import numpy as np
+import scipy as sp
+import scipy.stats
 def evaluation_sample_iterator(model_manager, amount = 30000, seed = 10):
     rand = Random(seed)
 
@@ -276,6 +278,54 @@ def evaluate(model_manager):
 
     result_arr.close()
 
+def show_results(rankings_file_path, step_size = 500):
+
+    rankings_file = FileArray(rankings_file_path, dtype='i4')
+    rankings_file.open()
+
+    performance = [[] for x in xrange(9)]
+
+    rankings = []
+
+    idx = 0
+    while 1:
+        returned = rankings_file.read(idx)[0]
+        idx += 1
+
+        if returned < 1:
+            break
+
+        rankings.append(returned-1)
+
+    performance = [[] for x in xrange(9)]
+    print 'num rankings done', len(rankings)
+    for x in xrange(0, len(rankings), step_size):
+        sub_rankings = rankings[x:x + step_size]
+        if len(sub_rankings) < 100:
+            continue
+
+        rATk = calculate_recall_at_k(sub_rankings, 10)
+
+        for k, v in rATk.iteritems():
+            v *= 100
+            performance[k].append(v)
+
+        result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
+
+    #    print result_str
+    for k in xrange(1,10):
+        print 'R@%i'%k, mean_confidence_interval(performance[k-1], confidence=0.99)
+
+
+    rankings_file.close()
+
+def mean_confidence_interval(data, confidence=0.95):
+    a = 1.0*np.array(data)
+    n = len(a)
+    m, se = np.mean(a), scipy.stats.sem(a)
+    h = se * sp.stats.t._ppf((1+confidence)/2., n-1)
+    return m, h
+
 def evaluate_lshf(model_manager, selection_method):
     rand_iter = random_response_generator(model_manager)
 
@@ -351,5 +401,8 @@ def evaluate_lshf(model_manager, selection_method):
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str, start_time=start_time)
 
     result_arr.close()
+
+
+
 #CAR 5%
 #5.04% R@1 26.522% | R@2 41.583% | R@3 52.072% | R@4 60.903% | R@5 69.620% | R@6 76.993% | R@7 83.510% | R@8 89.854% | R@9 95.456% remaining time: 1:30:22Traceback (most recent call last):
