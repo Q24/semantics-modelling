@@ -75,6 +75,7 @@ class FileArray():
     def write(self, index, arr):
         self.f.seek(self.NUM_HEADER_BYTES + (index * self.dtype.itemsize * self.shape[1]))
         self.f.write(arr.tostring())
+        self.f.flush()
 
 
 
