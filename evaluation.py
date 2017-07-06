@@ -222,7 +222,7 @@ def evaluate(model_manager):
     start_time = time()
     progress = 0
 
-    result_arr = FileArray('./results/decoder_results_%s.bin'%model_manager.model_name, shape=(20000, 1), dtype='i4')
+    result_arr = FileArray('./results/decoder_results_%s.bin'%model_manager.model_name, shape=(1000000, 1), dtype='i4')
     result_arr.open()
 
 
@@ -287,7 +287,7 @@ def evaluate_lshf(model_manager, selection_method):
     #translator = data_access.get_label_translator(model_manager)
     progress = 0
 
-    result_arr = FileArray('./results/%s_%s.bin'%(selection_method.__name__,model_manager.model_name), shape=(20000, 1), dtype='i4')
+    result_arr = FileArray('./results/%s_%s.bin'%(selection_method.__name__,model_manager.model_name), shape=(1000000, 1), dtype='i4')
     result_arr.open()
 
     for instance in evaluation_sample_iterator(model_manager):
