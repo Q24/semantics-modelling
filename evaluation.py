@@ -290,6 +290,8 @@ def evaluate_lshf(model_manager, selection_method):
     result_arr = FileArray('./results/%s_%s.bin'%(selection_method.__name__,model_manager.model_name), shape=(1000000, 1), dtype='i4')
     result_arr.open()
 
+    print 'evaluating %s on model: %s'%(selection_method.__name__,model_manager.model_name)
+
     for instance in evaluation_sample_iterator(model_manager):
         prev_result = result_arr.read(progress)
 
