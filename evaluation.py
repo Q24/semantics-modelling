@@ -187,7 +187,21 @@ def evaluate_generative(model_manager):
     #evaluator = get_response_evaluator(model_manager.load_currently_selected_model())
     rankings = []
     start_time = time()
+
+    result_arr = FileArray('./results/generative_results_%s.bin'%model_manager.model_name, shape=(1000000, 1), dtype='i4')
+    result_arr.open()
+    progress = 0
+
+    print 'evaluating generative approach for', model_manager.model_name
     for instance in evaluation_sample_iterator(model_manager):
+        progress += 1
+
+        prev_result = result_arr.read(progress)
+
+        if prev_result >= 1:
+            progress += 1
+            rankings.append(prev_result[0]-1)
+            continue
 
         random_responses = [rand_iter.next() for x in xrange(9)]
 
@@ -205,12 +219,16 @@ def evaluate_generative(model_manager):
         rank = [idx for idx, cand in enumerate(candidates) if candidates[idx][1]][0]
         rankings.append(rank)
 
+        result_arr.write(progress-1, np.array([rank+1], dtype='i4'))
+
+
         rATk = calculate_recall_at_k(rankings, 10)
         result_str = ' | '.join(['R@%i %.3f%%' % (k + 1, percentage * 100) for k, percentage in rATk.iteritems()])
 
         print_progress_bar(instance['progress'], instance['conversations'], additional_text=result_str,
                            start_time=start_time)
 
+    result_arr.close()
 
 def evaluate(model_manager):
 
