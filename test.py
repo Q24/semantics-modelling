@@ -11,6 +11,8 @@ from data.data_access import build_database_from_scratch, get_label_translator
 from data.encoding_tools import save_embeddings_to_file, check_embeddings_consistency, encode
 from ann.candidate_selection import *
 import evaluation
+from data.data_access import get_label_translator
+from ann import candidate_selection
 #-0.133256561537
 
 def chat_with_model(model_manager):
@@ -26,6 +28,55 @@ def chat_with_model(model_manager):
         samples, costs = sampler.sample([input.split()], n_samples=5, n_turns=1)
         for idx, sample in enumerate(samples[0]):
             print str(costs[0][idx])+ ': ' + sample
+
+def chat_with_lshf(model_manager):
+
+    ann = model_manager.load_lshf_model(True)
+
+
+    encoder = model_manager.load_currently_selected_model()
+    label_decoder = get_label_translator(m)
+
+    while 1:
+
+        # get textual input
+
+        context = raw_input('context: ').strip()
+
+        if not context.endswith(' __eou__ </s>'):
+            context += ' __eou__ </s>'
+
+
+        dia_embs, utt_embs = encoder.encode(context)
+
+        #print context
+
+        context_emb = dia_embs[-2][0]
+        utt_emb = utt_embs[-2][0]
+
+        distances, labels, embeddings = ann.kneighbors(context_emb, 120)
+
+        for label, distance in zip(labels[:10], distances[0][:10]):
+
+            print distance, label_decoder(label)
+            print label_decoder((label[0], label[1]+1))
+            print
+
+        search_context = {'distances': distances[0],
+                          'labels': [(label[0], label[1]+1) for label in labels],
+                          'candidate_dialogue_embeddings': embeddings,
+                          'utterance_embeddings': ann.utterance_embeddings,
+                          'original_utterance_embedding': utt_emb,
+                          'original_dialogue_embedding': context_emb}
+
+        scored = candidate_selection.answer_relevance(search_context)
+
+        print 'answer relevance '*10
+        print
+	scored = sorted(scored, key=lambda pair: pair[0])
+        for score, label in scored[:10]:
+            print score, label_decoder(label)
+            print
 
 def convert_model(m):
     encoder = m.load_currently_selected_model()
@@ -43,6 +94,9 @@ if __name__ == '__main__':
 
 
     m = ModelManager('ubuntu_vhred_vanilla')
+    chat_with_lshf(m)
+    exit()
+
     '''
     result_arr = FileArray('./results/context_and_answer_relevance_ubuntu_vhred_vanilla.bin', dtype='i4')
     result_arr.open()
@@ -60,8 +114,8 @@ if __name__ == '__main__':
 
     #chat_with_model(m)
     #evaluation.evaluate_generative(m)
-    evaluation.evaluate(m)
-    evaluation.evaluate_lshf(m, context_and_answer_relevance)
+    #evaluation.evaluate(m)
+    #evaluation.evaluate_lshf(m, context_and_answer_relevance)
 
     exit()
 
