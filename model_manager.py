@@ -4,6 +4,8 @@ import utils
 import logging
 import os
 import cPickle
+from data.encoding_tools import encode as encode_text_to_emb
+from ann import lsh_forest
 MODEL_DIR = './models/'
 
 FOLDER_STRUCTURE='''
@@ -191,7 +193,20 @@ class ModelManager():
             with open(root+file, 'rb') as f:
                 model = cPickle.load(f)
 
+            def encoding_fn(some_textual_context):
+                return encode_text_to_emb(some_textual_context, model)
+
+            model.encode = encoding_fn
             return model
+
+
+    def load_lshf_model(self, load_utterance_embeddings = False):
+        model = lsh_forest.load_lshf(self)
+
+        if load_utterance_embeddings:
+            model.utterance_embeddings = lsh_forest.load_utterance_embeddings(self)
+
+        return model
 
 
 
