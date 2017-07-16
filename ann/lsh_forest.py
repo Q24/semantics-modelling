@@ -206,10 +206,14 @@ def save_linked_utterance_embeddings(model_manager):
 
 def load_lshf(model_manager):
     nns_loc = model_manager.folders['nearest_neighbor'] + 'dia.lshf.pkl'
+    logging.debug('loading model skeleton from disc...')
     with open(nns_loc, 'rb') as f:
         nns = dill.load(f)
 
+    logging.debug('loading underlying embeddings from disc...')
     nns.nn.load_data(nns_loc.replace('.pkl', '.npz'))
+
+    logging.debug('building mapping structure for labels and embeddings')
     nns.build_label_table()
 
     return nns
