@@ -153,6 +153,16 @@ class ModelManager():
 
         return vocab
 
+    def translate(self, indices):
+
+        if not hasattr(self, 'idx_to_word'):
+            vocab = self.load_vocabulary()
+            self.idx_to_word = {idx:word for word, idx, _, _ in vocab}
+
+        return ' '.join([self.idx_to_word[idx] for idx in indices])
+
+
+
     def load_train_data(self):
         with open(self.files['train'], 'rb') as f:
             train = cPickle.load(f)
