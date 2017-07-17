@@ -13,6 +13,7 @@ from ann.candidate_selection import *
 import evaluation
 from data.data_access import get_label_translator
 from ann import candidate_selection
+import random
 #-0.133256561537
 
 def chat_with_model(model_manager):
@@ -56,6 +57,7 @@ def chat_with_lshf(model_manager):
 
         distances, labels, embeddings = ann.kneighbors(context_emb, 120)
 
+        print labels
         for label, distance in zip(labels[:10], distances[0][:10]):
 
             print distance, label_decoder(label)
@@ -86,6 +88,18 @@ def convert_model(m):
 
     m.save_state(encoder.state)
 
+def print_some_context_from_test_set(m):
+
+    test_set = m.load_test_data()
+
+    rand = random.Random(9)
+    for _ in xrange(30):
+
+        some_conv = rand.choice(test_set)
+
+        print m.translate(some_conv)
+        print
+
 if __name__ == '__main__':
     #58.0168834256
     logging.basicConfig(level=logging.DEBUG,
@@ -94,7 +108,9 @@ if __name__ == '__main__':
 
 
     m = ModelManager('ubuntu_vhred_vanilla')
-    chat_with_lshf(m)
+
+    print_some_context_from_test_set(m)
+    #chat_with_lshf(m)
     exit()
 
     '''
