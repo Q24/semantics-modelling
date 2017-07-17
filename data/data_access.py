@@ -150,8 +150,10 @@ def get_label_translator(model_manager, as_text = True):
         indices = [1] + list(binarized_base[label[0]]) + [1]
 
         one_indices = [idx for idx, v in enumerate(indices) if v == 1]
-
-        indices = indices[one_indices[label[1]]+1:one_indices[label[1]+1]]
+        try:
+            indices = indices[one_indices[label[1]]+1:one_indices[label[1]+1]]
+        except:
+            return 'End of conversation, no answer found.'
 
         if as_text:
             return ' '.join(vocab[word_id] for word_id in indices)
