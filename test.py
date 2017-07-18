@@ -33,7 +33,7 @@ def chat_with_model(model_manager):
 
 def chat_with_lshf(model_manager):
 
-    #ann = model_manager.load_lshf_model(True)
+    ann = model_manager.load_lshf_model(True)
 
 
     encoder = model_manager.load_currently_selected_model()
@@ -53,7 +53,7 @@ def chat_with_lshf(model_manager):
         dia_embs, utt_embs = encoder.encode(context)
 
         #print context
-        '''
+        #'''
         context_emb = dia_embs[-2][0]
         utt_emb = utt_embs[-2][0]
 
@@ -81,7 +81,7 @@ def chat_with_lshf(model_manager):
         for score, label in scored[:10]:
             print score, label_decoder(label)
             print
-        '''
+        #'''
         samples, costs = sampler.sample([context.split()], n_samples=5, n_turns=1)
         print 'HRED: ', samples[0][0]
         print
