@@ -13,6 +13,7 @@ from ann.candidate_selection import *
 import evaluation
 from data.data_access import get_label_translator
 from ann import candidate_selection
+from hred_vhred import search
 import random
 #-0.133256561537
 
@@ -81,7 +82,7 @@ def chat_with_lshf(model_manager):
             print score, label_decoder(label)
             print
         '''
-        samples, costs = sampler.sample([input.split()], n_samples=5, n_turns=1)
+        samples, costs = sampler.sample([context.split()], n_samples=5, n_turns=1)
         print 'HRED: ', samples[0][0]
         print
 
@@ -114,8 +115,8 @@ if __name__ == '__main__':
 
     m = ModelManager('ubuntu_vhred_vanilla')
 
-    print_some_context_from_test_set(m)
-    #chat_with_lshf(m)
+    #print_some_context_from_test_set(m)
+    chat_with_lshf(m)
     exit()
 
     '''
