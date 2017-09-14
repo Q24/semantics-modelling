@@ -6,8 +6,12 @@ import re, collections
 import model_manager
 import cPickle
 import logging
+import os
 
 alphabet = 'abcdefghijklmnopqrstuvwxyz'
+
+
+
 
 def train(model_manager, save=True):
     vocab = dict([(tok_id, tok) for tok, tok_id, _, _ in model_manager.load_vocabulary()])
@@ -52,9 +56,20 @@ def known(words, NWORDS):
 
 def correct(word, NWORDS):
     candidates = known([word], NWORDS) or known(edits1(word), NWORDS) or known_edits2(word, NWORDS) or [word]
-    print [(word, NWORDS[word]) for word in candidates]
     return max(candidates, key=NWORDS.get)
 
+
+def get_spell_corrector(model_manager):
+
+    assert os.path.exists(model_manager.files['frequencies'])
+
+    with open(model_manager.files['frequencies'], 'rb') as f:
+        NWORDS = cPickle.load(f)
+
+    def wrapper(some_word):
+        return correct(some_word, NWORDS)
+
+    return wrapper
 
 if __name__ == '__main__':
 
@@ -62,13 +77,13 @@ if __name__ == '__main__':
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
     m = model_manager.ModelManager('test')
 
-    with open(m.files['frequencies'], 'rb') as f:
-        NWORDS = cPickle.load(f)
+    corr = get_spell_corrector(m)
 
 
-    print correct('hoik', NWORDS)
-    print correct('smakelig', NWORDS)
 
-    print correct('dankjeiwel', NWORDS)
+    print corr('hoik')
+    print corr('smakelig')
+
+    print corr('dankjeiwel')
 
 

@@ -146,12 +146,15 @@ class ModelManager():
 
 
 
-    def load_vocabulary(self):
-
+    def load_vocabulary(self, clean=False):
         with open(self.files['dict'], 'rb') as f:
             vocab = cPickle.load(f)
 
+
+        if clean:
+            vocab = {word:idx for word, idx, _, _ in vocab}
         return vocab
+
 
     def translate(self, indices):
 
@@ -221,6 +224,8 @@ class ModelManager():
 
 
 if __name__ == '__main__':
+    logging.basicConfig(level=logging.DEBUG,
+                        format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
     m = ModelManager('test')
     state = m.load_current_state()
     print

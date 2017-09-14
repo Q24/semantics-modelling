@@ -8,7 +8,8 @@ def create_folder_if_not_existing(directory):
         os.makedirs(directory)
 
 
-
+def get_script_dir():
+    return os.path.dirname(os.path.realpath(__file__))
 
 def print_progress_bar(current_progress, total_progress, done = False, additional_text = '', tokens=25, start_time = None):
     sys.stdout.write('\r')

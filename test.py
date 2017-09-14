@@ -111,12 +111,42 @@ if __name__ == '__main__':
     logging.basicConfig(level=logging.DEBUG,
                         format="%(asctime)s: %(name)s: %(levelname)s: %(message)s")
 
+    from encode import EncoderWrapper
+
+    en = EncoderWrapper('vodafone_hred_v3', server_preprocessor=False)
+
+    sentences = ['Ik heb een vraag over mijn factuur', 'hoe groot is mijn laatste rekening?', 'Ik heb uw hulp nodig', 'problemen hebben met mijn telefoon']
+
+    embs = [(en.encode(sentence)[1][0], sentence) for sentence in sentences]
 
 
-    m = ModelManager('ubuntu_vhred_vanilla')
+    stuff = []
+    uniques = set([])
+    for emb1, sent1 in embs:
+        for emb2, sent2 in embs:
+            if sent1 == sent2:
+                continue
+
+            stuff.append((en.cosine(emb1, emb2), sent1, sent2))
+
+
+    for score, s1, s2 in sorted(stuff, key= lambda triple: triple[0], reverse=True):
+        if score in uniques:
+            continue
+
+        uniques.add(score)
+        print score, s1, '|', s2
+
+
+    print
+
+    exit()
+
+    m = ModelManager('vodafone_hred_v3')
 
     #print_some_context_from_test_set(m)
-    chat_with_lshf(m)
+    chat_with_model(m)
+    #chat_with_lshf(m)
     exit()
 
     '''
